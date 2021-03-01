@@ -2,10 +2,12 @@ import React, {useState, useRef, useEffect } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { Button } from 'react-native-elements'
 import { useNavigation } from '@react-navigation/native'
-import { closeSession, getCurrentUser } from '../../utils/actions'
 import Toast from 'react-native-easy-toast'
+
+import { closeSession, getCurrentUser } from '../../utils/actions'
 import Loading from '../../Components/Loading'
 import InfoUser from '../../Components/account/InfoUser'
+import AccountOptions from '../../Components/account/AccountOptions'
 
 export default function UserLogged() {
     const toastRef = useRef()
@@ -14,10 +16,12 @@ export default function UserLogged() {
     const [loading, setLoading] = useState(false)
     const [loadingText, setLoadingText] = useState("")
     const [user, setUser] = useState(null)
+    const [reloadUser, setReloadUser] = useState(false)
 
     useEffect(() => {
         setUser(getCurrentUser())
-    }, [])
+        setReloadUser(false)
+    }, [reloadUser])
 
     return (
         <View style={styles.container}> 
@@ -29,7 +33,11 @@ export default function UserLogged() {
                         setLoading={setLoading} 
                         setLoadingText={setLoadingText}
                     />
-                    <Text>Account Options</Text>
+                    <AccountOptions
+                        user={user}
+                        toastRef={toastRef}
+                        setReloadUser={setReloadUser}
+                    />
                 </View>
                 )
             }
