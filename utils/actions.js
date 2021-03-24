@@ -121,3 +121,65 @@ export const addDocumentWithoutId = async (collection, data) => {
     
     return result
 }
+
+export const getRestaurants = async (limitRestaurants) => {
+    const result = {statusResponse: true, error: null, restaurants: [], startRestaurant: null}
+    try {
+        const response = await db
+        .collection("restaurants")
+        .orderBy("createAt", "desc")
+        .limit(limitRestaurants)
+        .get()
+        if (response.docs.length > 0) {
+            result.startRestaurant = response.docs[response.docs.length - 1]
+        }
+        response.forEach((doc) => {
+            const restaurant = doc.data()
+            restaurant.id = doc.id
+            result.restaurants.push(restaurant)
+        })
+    } catch (error) {
+        result.statusResponse = false
+        result.error = error
+    }
+    
+    return result
+}
+export const getMoreRestaurants = async (limitRestaurants, startRestaurant) => {
+    const result = {statusResponse: true, error: null, restaurants: [], startRestaurant: null}
+    try {
+        const response = await db
+        .collection("restaurants")
+        .orderBy("createAt", "desc")
+        .startAfter(startRestaurant.data().createAt)
+        .limit(limitRestaurants)
+        .get()
+        if (response.docs.length > 0) {
+            result.startRestaurant = response.docs[response.docs.length - 1]
+        }
+        response.forEach((doc) => {
+            const restaurant = doc.data()
+            restaurant.id = doc.id
+            result.restaurants.push(restaurant)
+        })
+    } catch (error) {
+        result.statusResponse = false
+        result.error = error
+    }
+    
+    return result
+}
+
+export const getDocumentById = async (collection, id) => {
+    const result = {statusResponse: true, error: null, document: null}
+    try {
+        const response = await db.collection(collection).doc(id).get()
+        result.document = response.data()
+        result.document.id = response.id
+    } catch (error) {
+        result.statusResponse = false
+        result.error = error
+    }
+    
+    return result
+}

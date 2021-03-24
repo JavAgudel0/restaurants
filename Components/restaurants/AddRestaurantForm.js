@@ -37,6 +37,7 @@ export default function AddRestaurantForm({toastRef, setLoading, navigation}) {
             callingCode: formData.callingCode,
             phone: formData.phone,
             location: locationRestaurant,
+            email: formData.email,
             images: responseUploadImages,
             rating: 0,
             ratingTotal: 0,
