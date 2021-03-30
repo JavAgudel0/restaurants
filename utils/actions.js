@@ -110,16 +110,15 @@ export const updatePassword = async (password) => {
     return result
 }
 
-export const addDocumentWithoutId = async (collection, data) => {
-    const result = {statusResponse: true, error: null}
+export const addDocumentWithoutId = async(collection, data) => {
+    const result = { statusResponse: true, error: null }
     try {
         await db.collection(collection).add(data)
     } catch (error) {
         result.statusResponse = false
         result.error = error
     }
-    
-    return result
+    return result     
 }
 
 export const getRestaurants = async (limitRestaurants) => {
@@ -182,4 +181,15 @@ export const getDocumentById = async (collection, id) => {
     }
     
     return result
+}
+
+export const updateDocument = async(collection, id, data) => {
+    const result = { statusResponse: true, error: null }
+    try {
+        await db.collection(collection).doc(id).update(data)
+    } catch (error) {
+        result.statusResponse = false
+        result.error = error
+    }
+    return result     
 }

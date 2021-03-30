@@ -24,7 +24,6 @@ export default function MapRestaurant({location, name, height}) {
                     longitude: location.longitude
                 }}
             />
-
         </MapView>
     )
 }
