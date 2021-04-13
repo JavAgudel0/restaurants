@@ -2,10 +2,16 @@ import { firebaseApp } from './firebase'
 import firebase from 'firebase'
 import { fileToBlob } from './helpers'
 import { map } from 'lodash'
+import {FireSQL} from 'firesql'
 require('firebase/firestore')
 require('firebase/auth')
+import * as Notifications from 'expo-notifications'
+import Constans from 'expo-constants'
+import { Alert } from 'react-native'
+import { Platform } from 'react-native'
 
 const db = firebase.firestore(firebaseApp)
+const fireSQL = new FireSQL(firebase.firestore(), {includeId: "id"})
 
 export const isUserLogged = () => {
     let isLogged = false
@@ -257,17 +263,13 @@ export const getFavorites = async() => {
         const response = await db
             .collection("favorites")
             .where("idUser", "==", getCurrentUser().uid)
-            .get()
-            const restaurantsId = []
-        response.forEach(async(doc) => {
-            const favorite = doc.data()
-            restaurantsId.push(favorite.idRestaurant)
-        })
+            .get()            
         await Promise.all(
-            map(restaurantsId, async(restaurantId) => {
-                const response2 = await getDocumentById("restaurants", restaurantId)
-                if (response2.statusResponse) {
-                    result.favorites.push(response2.document)
+            map(response.docs, async(doc) => {
+                const favorite = doc.data()
+                const restaurant = await getDocumentById("restaurants", favorite.idRestaurant)
+                if (restaurant.statusResponse) {
+                    result.favorites.push(restaurant.document)
                 }
             })
         )
@@ -291,6 +293,60 @@ export const getTopRestaurants = async(limit) => {
                 restaurant.id = doc.id
                 result.restaurants.push(restaurant)
             })
+    } catch (error) {
+        result.statusResponse = false
+        result.error = error
+    }
+    return result     
+}
+
+export const searchRestaurants = async(criteria) => {
+    const result = { statusResponse: true, error: null, restaurants: [] }
+    try {
+        result.restaurants = await fireSQL.query(`SELECT * FROM restaurants WHERE name LIKE '${criteria}%'`)
+    } catch (error) {
+        result.statusResponse = false
+        result.error = error
+    }
+    return result     
+}
+
+export const getToken = async() => {
+    if (!Constans.isDevice) {
+        Alert.alert("Debes utilizar un dispositivo físico para poder utilizar las notificaciones.")
+        return
+    }
+
+    const { status: existingStatus } = await Notifications.getPermissionsAsync()
+    let finalStatus = existingStatus
+    if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync()
+        finalStatus = status 
+    }
+
+    if (finalStatus !== "granted") {
+        Alert.alert("Debes dar permiso para acceder a las notificaciones.")
+        return
+    }
+
+    const token = (await Notifications.getExpoPushTokenAsync()).data
+
+    if (Platform.OS == "android") {
+        Notifications.setNotificationChannelAsync("default", {
+            name: "default",
+            importance: Notifications.AndroidImportance.MAX,
+            vibrationPattern: [0, 250, 250, 250],
+            lightColor: "#FF231F7C"
+        })
+    }
+
+    return token
+}
+
+export const addDocumentWithId = async(collection, data, doc) => {
+    const result = { statusResponse: true, error: null }
+    try {
+        await db.collection(collection).doc(doc).set(data)
     } catch (error) {
         result.statusResponse = false
         result.error = error

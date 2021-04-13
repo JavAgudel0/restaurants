@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { Button, Icon, Input } from 'react-native-elements'
-import { set, size } from 'lodash'
+import { size } from 'lodash'
 import { useNavigation } from '@react-navigation/native'
 
 import Loading from '../Loading'
 import { validateEmail } from '../../utils/helpers'
-import {registerUser} from '../../utils/actions'
+import {addDocumentWithId, getCurrentUser, getToken, registerUser} from '../../utils/actions'
 
 export default function RegisterForm() {
     const [showPassword, setShowPassword] = useState(false)
@@ -22,18 +22,28 @@ export default function RegisterForm() {
         setFormData({ ...formData, [type]: e.nativeEvent.text})        
     }
 
-    const doRegisterUser = async () => {
-        if(!validateData()) {
-            return
+    const doRegisterUser = async() => {
+        if (!validateData()) {
+            return;
         }
 
         setLoading(true)
-        const result = await registerUser( formData.email, formData.password)
-        setLoading(false)
+        const result = await registerUser(formData.email, formData.password)
         if (!result.statusResponse) {
-             setErrorEmail(result.error)       
-             return
+            setLoading(false)
+            setErrorEmail(result.error)
+            return
         }
+
+        const token = await getToken()
+        const resultUser = await addDocumentWithId("users", { token }, getCurrentUser().uid)
+        if (!resultUser.statusResponse) {
+            setLoading(false)
+            setErrorEmail(result.error)
+            return
+        }       
+
+        setLoading(false)
         navigation.navigate("account")
     }
 
